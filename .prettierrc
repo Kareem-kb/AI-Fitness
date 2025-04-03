@@ -1,0 +1,8 @@
+{
+  "plugins": ["prettier-plugin-sort-json", "prettier-plugin-tailwindcss"],
+  "printWidth": 80,
+  "semi": true,
+  "singleQuote": true,
+  "trailingComma": "es5",
+  "pluginSearchDirs": ["."]
+}
