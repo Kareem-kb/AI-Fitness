@@ -1,5 +1,5 @@
-// actions/openai.ts (Server Action)
 'use server';
+
 import {
   createOrGetThread,
   createAssistant,
@@ -7,9 +7,37 @@ import {
   createRun,
   pollRunStatus,
   getLastMessage,
-} from './threadManager';
-import { handleFunctionCalls } from './functionExecutor';
+} from '../../helperFunc/threadManager';
+import { handleFunctionCalls } from '../../helperFunc/functionExecutor';
 import { ThreadState } from '@/app/types/fitness';
+
+// Simple in-memory token tracking
+const tokenUsage = new Map<string, { count: number; lastReset: number }>();
+
+function trackTokenUsage(threadId: string, tokens: number) {
+  const now = Date.now();
+  const usage = tokenUsage.get(threadId) || { count: 0, lastReset: now };
+
+  // Reset counter if it's been more than 24 hours
+  if (now - usage.lastReset > 24 * 60 * 60 * 1000) {
+    usage.count = 0;
+    usage.lastReset = now;
+  }
+
+  // Update usage
+  usage.count += tokens;
+  tokenUsage.set(threadId, usage);
+
+  // Check if thread has exceeded daily limit (100,000 tokens)
+  const hasExceededLimit = usage.count > 100000;
+
+  return {
+    currentUsage: usage.count,
+    hasExceededLimit,
+    remainingTokens: Math.max(0, 100000 - usage.count),
+    resetTime: usage.lastReset + 24 * 60 * 60 * 1000,
+  };
+}
 
 export async function getCompletion(
   state: ThreadState | null,
@@ -29,6 +57,14 @@ export async function getCompletion(
 
     // Create or retrieve thread
     const thread = await createOrGetThread(threadId);
+
+    // Check token usage for this thread
+    const usage = trackTokenUsage(thread.id, Math.ceil(prompt.length / 4));
+    if (usage.hasExceededLimit) {
+      return {
+        error: `Daily token limit exceeded for this conversation. Please try again in ${Math.ceil((usage.resetTime - Date.now()) / (1000 * 60 * 60))} hours or start a new conversation.`,
+      };
+    }
 
     // Add message to thread
     await addMessageToThread(thread.id, prompt);
@@ -52,6 +88,9 @@ export async function getCompletion(
 
     // Get the final message
     const lastMessage = await getLastMessage(thread.id);
+
+    // Update token usage with response
+    trackTokenUsage(thread.id, Math.ceil(lastMessage.length / 4));
 
     return {
       result: {

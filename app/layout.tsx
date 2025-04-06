@@ -13,8 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'AI Couch',
-  description: 'exercise and health generator by Openai API',
+  title: 'AI Fitness Advisor',
+  description:
+    'exercise and health generator by Openai API makde by kareem-kb.tech',
 };
 
 export default function RootLayout({
@@ -27,7 +28,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <nav className="flex justify-center">AI Couch </nav>
+        <nav className="fixed top-0 flex justify-start bg-white pl-20">
+          <h1 className="text-2xl font-bold">AI Fitness Advisor</h1>{' '}
+        </nav>
         {children}
       </body>
     </html>

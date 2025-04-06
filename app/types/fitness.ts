@@ -42,7 +42,8 @@ export interface Exercise {
 export interface Message {
   role: 'user' | 'assistant';
   content: string;
-  timestamp: Date;
+  isLoading?: boolean;
+  isError?: boolean;
 }
 
 export interface Thread extends ThreadCreateParams {
