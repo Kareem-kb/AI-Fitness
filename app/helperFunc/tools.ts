@@ -1,5 +1,3 @@
-import { UserMetrics } from '../../types/fitness';
-
 export const fitnessTools = [
   {
     type: 'function',
